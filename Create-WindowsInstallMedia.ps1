@@ -65,31 +65,39 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
     #Begin if both mount folders are empty
     If($MountFolderCheck -eq 0 -and $REMountFolderCheck -eq 0){
+
         #Begin if Windows source files are found
         If($WindowsSourceTest){
             Write-Host "Windows source files found in $WindowsSourceFolder" -ForegroundColor Green
+
             #Set SKU to Pro Education if variable was not given
             If(!($SKU)){
                 Write-Host "SKU was not defined, will try to use Pro Education" -ForegroundColor Yellow
                 $SKUDefault = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | Where-Object {$_.ImageName -like "Windows * Pro Education"}
                 $SKU = $SKUDefault.ImageName
             }
+
             #Begin if SKU matches
             If(Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | Where-Object {$_.ImageName -like "$SKU"}){
                 Write-Host "$SKU found" -ForegroundColor Green
+
                 #Begin if at least one driver folder has content
                 If($PEDriverFolderCheck -ne 0 -or $ModelDriversFolderCheck -ne 0){
                     Write-Host "Drivers found" -ForegroundColor Green
+
                     #Inject WinPE drivers to boot.wim if driver folder has content
                     If($PEDriverFolderCheck -ne 0){
+
+                        #Get image name for mounting the first boot.wim image
                         $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | Where-Object {$_.ImageIndex -eq 1}
                         $BootWimName = $BootWimIndex.ImageName
+
                         Write-Host "Mounting boot.wim, Index:1, $BootWimName" -ForegroundColor Green
                         try {
                             Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder
                         }
                         catch {
-                            Write-host "Error encountered while mounting"$_.Exception.Message
+                            Write-host "Error encountered while mounting "$_.Exception.Message
                         }
 
                         Write-Host "Injecting WinPE drivers to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
@@ -97,19 +105,45 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
                         }
                         catch {
-                            Write-host "Error encountered while injecting drivers"$_.Exception.Message
+                            Write-host "Error encountered while injecting drivers "$_.Exception.Message
                         }
-                        ###################CONTINUE###################
+
                         Write-Host "Committing changes to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
-                        Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
+                        try {
+                            Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
+                        }
+                        catch {
+                            Write-host "Error encountered while committing changes "$_.Exception.Message
+                        }
+                        
+                        #Get image name for mounting the second boot.wim image
                         $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | Where-Object {$_.ImageIndex -eq 2}
                         $BootWimName = $BootWimIndex.ImageName
+                        
                         Write-Host "Mounting boot.wim, Index:2, $BootWimName" -ForegroundColor Green
-                        Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:2 /MountDir:$WindowsMountFolder
+                        try {
+                            Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:2 /MountDir:$WindowsMountFolder
+                        }
+                        catch {
+                            Write-host "Error encountered while mounting "$_.Exception.Message
+                        }
+
                         Write-Host "Injecting WinPE drivers to boot.wim, Index:2, $BootWimName" -ForegroundColor Green
-                        Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
+                        try {
+                            Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
+                        }
+                        catch {
+                            Write-host "Error encountered while injecting drivers "$_.Exception.Message
+                        }
+                        
                         Write-Host "Committing changes to boot.wim, Index:2, $BootWimName" -ForegroundColor Green
-                        Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
+                        try {
+                            Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
+                        }
+                        catch {
+                            Write-host "Error encountered while committing changes "$_.Exception.Message
+                        }
+                        
                     }
                     Else{
                         Write-Host "$WinPEDriverFolder folder does not contain any drivers, skipping boot.wim modification" -ForegroundColor Yellow

@@ -50,7 +50,7 @@ $WindowsMountFolder = "C:\Temp\Mount"
 $WinREMountFolder = "C:\Temp\WinRE"
 
 #Begin if required folders are found
-If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Test-Path $WindowsSourceFolder)){
+If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Test-Path $WindowsMountFolder) -and (Test-Path $WinREMountFolder) -and (Test-Path $WindowsSourceFolder)){
     Write-Host "Required folders found" -ForegroundColor Green
     
     #Folder testing variables

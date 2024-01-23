@@ -85,9 +85,21 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | Where-Object {$_.ImageIndex -eq 1}
                         $BootWimName = $BootWimIndex.ImageName
                         Write-Host "Mounting boot.wim, Index:1, $BootWimName" -ForegroundColor Green
-                        Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder
+                        try {
+                            Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder
+                        }
+                        catch {
+                            Write-host "Error encountered while mounting"$_.Exception.Message
+                        }
+
                         Write-Host "Injecting WinPE drivers to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
-                        Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
+                        try {
+                            Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
+                        }
+                        catch {
+                            Write-host "Error encountered while injecting drivers"$_.Exception.Message
+                        }
+                        ###################CONTINUE###################
                         Write-Host "Committing changes to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
                         Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
                         $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | Where-Object {$_.ImageIndex -eq 2}

@@ -39,8 +39,7 @@
 [CmdLetBinding()]
 Param (
     [string]$SKU,
-    [switch]$SplitImage = $false,
-    [switch]$RemoveBloat = $false
+    [switch]$SplitImage = $false
 )
 
 #Folder variables
@@ -52,8 +51,8 @@ $WinREMountFolder = "C:\Temp\WinRE"
 
 #Folder content testing variables
 $WindowsSourceTest = Test-Path "$WindowsSourceFolder\sources\install.wim" -PathType leaf
-$PEDriverFolderCheck = (Get-ChildItem -Path $WinPEDriverFolder\*.inf -Force -Recurse | where {!$_.PSIsContainer} | Measure-Object).Count
-$ModelDriversFolderCheck = (Get-ChildItem -Path $ModelDriversFolder\*.inf -Force -Recurse | where {!$_.PSIsContainer} | Measure-Object).Count
+$PEDriverFolderCheck = (Get-ChildItem -Path $WinPEDriverFolder\*.inf -Force -Recurse | Where-Object {!$_.PSIsContainer} | Measure-Object).Count
+$ModelDriversFolderCheck = (Get-ChildItem -Path $ModelDriversFolder\*.inf -Force -Recurse | Where-Object {!$_.PSIsContainer} | Measure-Object).Count
 
 #Begin if Windows source files are found
 If($WindowsSourceTest){
@@ -61,18 +60,18 @@ If($WindowsSourceTest){
     #Set SKU to Pro Education if variable was not given
     If(!($SKU)){
         Write-Host "SKU was not defined, will try to use Pro Education" -ForegroundColor Yellow
-        $SKUDefault = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | where {$_.ImageName -like "Windows * Pro Education"}
+        $SKUDefault = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | Where-Object {$_.ImageName -like "Windows * Pro Education"}
         $SKU = $SKUDefault.ImageName
     }
     #Begin if SKU matches
-    If(Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | where {$_.ImageName -like "$SKU"}){
+    If(Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | Where-Object {$_.ImageName -like "$SKU"}){
         Write-Host "$SKU found" -ForegroundColor Green
         #Begin if at least one driver folder has content
         If($PEDriverFolderCheck -ne 0 -or $ModelDriversFolderCheck -ne 0){
             Write-Host "Drivers found" -ForegroundColor Green
             #Inject WinPE drivers to boot.wim if driver folder has content
             If($PEDriverFolderCheck -ne 0){
-                $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | where {$_.ImageIndex -eq 1}
+                $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | Where-Object {$_.ImageIndex -eq 1}
                 $BootWimName = $BootWimIndex.ImageName
                 Write-Host "Mounting boot.wim, Index:1, $BootWimName" -ForegroundColor Green
                 Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder
@@ -80,7 +79,7 @@ If($WindowsSourceTest){
                 Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
                 Write-Host "Committing changes to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
                 Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
-                $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | where {$_.ImageIndex -eq 2}
+                $BootWimIndex = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\boot.wim | Where-Object {$_.ImageIndex -eq 2}
                 $BootWimName = $BootWimIndex.ImageName
                 Write-Host "Mounting boot.wim, Index:2, $BootWimName" -ForegroundColor Green
                 Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:2 /MountDir:$WindowsMountFolder
@@ -95,14 +94,14 @@ If($WindowsSourceTest){
 
             #Mount selected SKU from install.wim
             If($ModelDriversFolderCheck -ne 0 -or $PEDriverFolderCheck -ne 0){
-                $Image = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | where {$_.ImageName -like "$SKU"}
+                $Image = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | Where-Object {$_.ImageName -like "$SKU"}
                 $Index = $Image.ImageIndex
                 Write-Host "Mounting install.wim, Index:$Index - $SKU" -ForegroundColor Green
                 Dism /Mount-Image /imagefile:$WindowsSourceFolder\sources\install.wim /Index:$Index /MountDir:$WindowsMountFolder
 
                 #Mount Winre.wim and inject WinPE drivers if driver folder has content
                 If($PEDriverFolderCheck -ne 0){
-                    $WinREWimIndex = Get-WindowsImage -ImagePath $WindowsMountFolder\Windows\System32\Recovery\winre.wim | where {$_.ImageIndex -eq 1}
+                    $WinREWimIndex = Get-WindowsImage -ImagePath $WindowsMountFolder\Windows\System32\Recovery\winre.wim | Where-Object {$_.ImageIndex -eq 1}
                     $WinREWimName = $WinREWimIndex.ImageName
                     Write-Host "Mounting Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
                     Dism /Mount-Wim /WimFile:$WindowsMountFolder\Windows\System32\Recovery\winre.wim /index:1 /MountDir:$WinREMountFolder
@@ -135,13 +134,6 @@ If($WindowsSourceTest){
                 Dism /Export-Image /SourceImageFile:$WindowsSourceFolder\sources\install.wim /SourceIndex:$Index /DestinationImageFile:$WindowsSourceFolder\sources\temp.wim
                 Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
                 Rename-Item -Path "$WindowsSourceFolder\sources\temp.wim" -NewName "install.wim"
-
-                #Remove bloatware
-                If($RemoveBloat -ne $false){
-                    Write-Host "Removing AppxPackages has not been implemented yet" -ForegroundColor Red
-                    #Mount-WindowsImage -ImagePath "$WindowsSourceFolder\sources\install.wim" -Index 1 -Path $WindowsMountFolder
-                    #Dismount-WindowsImage -Path $WindowsMountFolder -Save
-                }
 
                 #Split install.wim at 3800MB
                 If($SplitImage -ne $false){

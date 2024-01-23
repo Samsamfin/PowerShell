@@ -27,7 +27,7 @@
     Available SKUs can be checked with the following command:
     Get-WindowsImage -ImagePath 'Path\To\install.wim'
     .PARAMETER SplitImage
-    Split the final install.wim to 3800MB .SWM parts so that the installation media can be used with FAT32 formatted USB-media.
+    Split the final install.wim to 3800 MB .SWM parts so that the installation media can be used with FAT32 formatted USB-media.
     .EXAMPLE
     PS> Create-WindowsInstallMedia.ps1
     .EXAMPLE
@@ -48,6 +48,9 @@ $WinPEDriverFolder = "C:\Temp\WinPE-Drivers"
 $ModelDriversFolder = "C:\Temp\Model-Drivers"
 $WindowsMountFolder = "C:\Temp\Mount"
 $WinREMountFolder = "C:\Temp\WinRE"
+
+#Other variables
+$SplitSize = "3800"
 
 #Begin if required folders are found
 If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Test-Path $WindowsMountFolder) -and (Test-Path $WinREMountFolder) -and (Test-Path $WindowsSourceFolder)){
@@ -143,10 +146,10 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
                         Rename-Item -Path "$WindowsSourceFolder\sources\temp.wim" -NewName "install.wim"
 
-                        #Split install.wim at 3800MB
+                        #Split install.wim
                         If($SplitImage -ne $false){
-                            Write-Host "Splitting install.wim to 3800MB parts" -ForegroundColor Green
-                            Dism /Split-Image /ImageFile:$WindowsSourceFolder\sources\install.wim /SWMFile:$WindowsSourceFolder\sources\install.swm /FileSize:3800
+                            Write-Host "Splitting install.wim to $SplitSize MB parts" -ForegroundColor Green
+                            Dism /Split-Image /ImageFile:$WindowsSourceFolder\sources\install.wim /SWMFile:$WindowsSourceFolder\sources\install.swm /FileSize:$SplitSize
                             Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
                         }
 

@@ -5,7 +5,7 @@
     Sami Törönen
     23.01.2024
 
-    Version 1.2
+    Version 1.3
     .DESCRIPTION
     For this to work, create the following folder structure. You can use different folder names, just don't
     forget to change the folder variables accordingly.
@@ -97,7 +97,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder
                         }
                         catch {
-                            Write-host "Error encountered while mounting "$_.Exception.Message
+                            Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
                         }
 
                         Write-Host "Injecting WinPE drivers to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
@@ -105,7 +105,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
                         }
                         catch {
-                            Write-host "Error encountered while injecting drivers "$_.Exception.Message
+                            Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
                         }
 
                         Write-Host "Committing changes to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
@@ -113,7 +113,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
                         }
                         catch {
-                            Write-host "Error encountered while committing changes "$_.Exception.Message
+                            Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red
                         }
                         
                         #Get image name for mounting the second boot.wim image
@@ -125,7 +125,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:2 /MountDir:$WindowsMountFolder
                         }
                         catch {
-                            Write-host "Error encountered while mounting "$_.Exception.Message
+                            Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
                         }
 
                         Write-Host "Injecting WinPE drivers to boot.wim, Index:2, $BootWimName" -ForegroundColor Green
@@ -133,7 +133,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
                         }
                         catch {
-                            Write-host "Error encountered while injecting drivers "$_.Exception.Message
+                            Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
                         }
                         
                         Write-Host "Committing changes to boot.wim, Index:2, $BootWimName" -ForegroundColor Green
@@ -141,7 +141,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
                         }
                         catch {
-                            Write-host "Error encountered while committing changes "$_.Exception.Message
+                            Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red
                         }
                         
                     }
@@ -153,21 +153,52 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                     If($ModelDriversFolderCheck -ne 0 -or $PEDriverFolderCheck -ne 0){
                         $Image = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | Where-Object {$_.ImageName -like "$SKU"}
                         $Index = $Image.ImageIndex
+
                         Write-Host "Mounting install.wim, Index:$Index - $SKU" -ForegroundColor Green
-                        Dism /Mount-Image /imagefile:$WindowsSourceFolder\sources\install.wim /Index:$Index /MountDir:$WindowsMountFolder
+                        try {
+                            Dism /Mount-Image /imagefile:$WindowsSourceFolder\sources\install.wim /Index:$Index /MountDir:$WindowsMountFolder
+                        }
+                        catch {
+                            Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
+                        }
 
                         #Mount Winre.wim and inject WinPE drivers if driver folder has content
                         If($PEDriverFolderCheck -ne 0){
                             $WinREWimIndex = Get-WindowsImage -ImagePath $WindowsMountFolder\Windows\System32\Recovery\winre.wim | Where-Object {$_.ImageIndex -eq 1}
                             $WinREWimName = $WinREWimIndex.ImageName
+
                             Write-Host "Mounting Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
-                            Dism /Mount-Wim /WimFile:$WindowsMountFolder\Windows\System32\Recovery\winre.wim /index:1 /MountDir:$WinREMountFolder
+                            try {
+                                Dism /Mount-Wim /WimFile:$WindowsMountFolder\Windows\System32\Recovery\winre.wim /index:1 /MountDir:$WinREMountFolder
+                            }
+                            catch {
+                                Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
+                            }
+
                             Write-Host "Injecting WinPE drivers to Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
-                            Dism /Image:$WinREMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
+                            try {
+                                Dism /Image:$WinREMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned
+                            }
+                            catch {
+                                Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
+                            }
+                            
                             Write-Host "Cleanup Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
-                            Dism /Image:$WinREMountFolder /Cleanup-Image /StartComponentCleanup
+                            try {
+                                Dism /Image:$WinREMountFolder /Cleanup-Image /StartComponentCleanup
+                            }
+                            catch {
+                                Write-host "Error encountered while cleaning up"$_.Exception.Message -ForegroundColor Red
+                            }
+                            
                             Write-Host "Committing changes to Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
-                            Dism /Unmount-Image /MountDir:$WinREMountFolder /Commit
+                            try {
+                                Dism /Unmount-Image /MountDir:$WinREMountFolder /Commit
+                            }
+                            catch {
+                                Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red
+                            }
+                            
                         }
                         Else{
                             Write-Host "$WinPEDriverFolder folder does not contain any drivers, skipping Winre.wim modification" -ForegroundColor Yellow
@@ -176,7 +207,13 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         #Inject device model specific drivers to install.wim
                         If($ModelDriversFolderCheck -ne 0){
                             Write-Host "Injecting drivers to install.wim, Index:$Index, $SKU" -ForegroundColor Green
-                            Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$ModelDriversFolder /Recurse /ForceUnsigned
+                            try {
+                                Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$ModelDriversFolder /Recurse /ForceUnsigned
+                            }
+                            catch {
+                                Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
+                            }
+                            
                         }
                         Else{
                             Write-Host "$ModelDriversFolder folder does not contain any drivers, skipping install.wim driver injection" -ForegroundColor Yellow
@@ -184,18 +221,35 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         
                         #Save changes to install.wim
                         Write-Host "Committing changes to install.wim, Index:$Index, $SKU - this step will take 5-30 minutes" -ForegroundColor Green
-                        Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
-
+                        try {
+                            Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit
+                        }
+                        catch {
+                            Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red
+                        }
+                        
                         #Keep only the selected SKU
                         Write-Host "Exporting Index:$Index, $SKU" -ForegroundColor Green
-                        Dism /Export-Image /SourceImageFile:$WindowsSourceFolder\sources\install.wim /SourceIndex:$Index /DestinationImageFile:$WindowsSourceFolder\sources\temp.wim
+                        try {
+                            Dism /Export-Image /SourceImageFile:$WindowsSourceFolder\sources\install.wim /SourceIndex:$Index /DestinationImageFile:$WindowsSourceFolder\sources\temp.wim
+                        }
+                        catch {
+                            Write-host "Error encountered while exporting Index:$Index, $SKU"$_.Exception.Message -ForegroundColor Red
+                        }
+                        
                         Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
                         Rename-Item -Path "$WindowsSourceFolder\sources\temp.wim" -NewName "install.wim"
 
                         #Split install.wim
                         If($SplitImage -ne $false){
                             Write-Host "Splitting install.wim to $SplitSize MB parts" -ForegroundColor Green
-                            Dism /Split-Image /ImageFile:$WindowsSourceFolder\sources\install.wim /SWMFile:$WindowsSourceFolder\sources\install.swm /FileSize:$SplitSize
+                            try {
+                                Dism /Split-Image /ImageFile:$WindowsSourceFolder\sources\install.wim /SWMFile:$WindowsSourceFolder\sources\install.swm /FileSize:$SplitSize
+                            }
+                            catch {
+                                Write-host "Error encountered while splitting install.wim".Exception.Message -ForegroundColor Red
+                            }
+                            
                             Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
                         }
 

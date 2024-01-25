@@ -3,12 +3,12 @@
     Create Windows installation media with manufacturer and model specific drivers. WinPE drivers are also added to WinRE.
 
     Sami Törönen
-    23.01.2024
+    25.01.2024
 
-    Version 1.3
+    Version 1.4
     .DESCRIPTION
-    For this to work, create the following folder structure. You can use different folder names, just don't
-    forget to change the folder variables accordingly.
+    For this to work, create the following folder structure. The script will use this structure by default, but if you choose to use
+    different folder names, make sure to use the additional parameters described below to set the desired paths.
         C:\Temp\
             Model-Drivers\
             Mount\
@@ -28,28 +28,38 @@
     Get-WindowsImage -ImagePath 'Path\To\install.wim'
     .PARAMETER SplitImage
     Split the final install.wim to 3800 MB .SWM parts so that the installation media can be used with FAT32 formatted USB-media.
+    .PARAMETER WindowsSourceFolder
+    Path to Windows installation source files. Default path is C:\Temp\WindowsSource.
+    .PARAMETER WinPEDriverFolder
+    Path to WinPE drivers. Default path is C:\Temp\WinPE-Drivers.
+    .PARAMETER ModelDriversFolder
+    Path to device model drivers. Default path is C:\Temp\Model-Drivers.
+    .PARAMETER WindowsMountFolder
+    Define path where install.wim will be mounted. Default path is C:\Temp\Mount.
+    .PARAMETER WinREMountFolder
+    Define path where Winre.wim will be mounted. Default path is C:\Temp\WinRE.
     .EXAMPLE
     PS> Create-WindowsInstallMedia.ps1
     .EXAMPLE
     PS> Create-WindowsInstallMedia.ps1 -SKU "Windows 10 Pro"
     .EXAMPLE
     PS> Create-WindowsInstallMedia.ps1 -SKU "Windows 10 Pro" -SplitImage
+    .EXAMPLE
+    PS> Create-WindowsInstallMedia.ps1 -SKU "Windows 10 Pro" -WindowsSourceFolder "C:\Temp\Source"
 #>
 
 [CmdLetBinding()]
 Param (
     [string]$SKU,
+    [string]$WindowsSourceFolder = "C:\Temp\WindowsSource",
+    [string]$WinPEDriverFolder = "C:\Temp\WinPE-Drivers",
+    [string]$ModelDriversFolder = "C:\Temp\Model-Drivers",
+    [string]$WindowsMountFolder = "C:\Temp\Mount",
+    [string]$WinREMountFolder = "C:\Temp\WinRE",
     [switch]$SplitImage = $false
 )
 
-#Folder variables
-$WindowsSourceFolder = "C:\Temp\WindowsSource"
-$WinPEDriverFolder = "C:\Temp\WinPE-Drivers"
-$ModelDriversFolder = "C:\Temp\Model-Drivers"
-$WindowsMountFolder = "C:\Temp\Mount"
-$WinREMountFolder = "C:\Temp\WinRE"
-
-#Other variables
+#Variables
 $SplitSize = "3800"
 
 #Begin if required folders are found

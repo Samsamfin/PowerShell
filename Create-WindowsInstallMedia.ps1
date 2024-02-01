@@ -1,27 +1,23 @@
-﻿<#
+﻿#Requires -RunAsAdministrator
+<#
     .SYNOPSIS
     Create Windows installation media with manufacturer and model specific drivers. WinPE drivers are also added to WinRE.
 
     Sami Törönen
-    25.01.2024
+    01.02.2024
 
-    Version 1.4
+    Version 1.5
     .DESCRIPTION
     For this to work, create the following folder structure. The script will use this structure by default, but if you choose to use
     different folder names, make sure to use the additional parameters described below to set the desired paths.
         C:\Temp\
             Model-Drivers\
-            Mount\
             WindowsSource\
             WinPE-Drivers\
-            WinRE\
 
     -Copy model specific drivers into "Model-Drivers" folder. This folder will be read recursively.
     -Copy manufacturer specific Win PE drivers into "WinPE-Drivers" folder. This folder will be read recursively.
     -Copy Windows installation files into "WindowsSource" folder.
-
-    When running the script, please do not open "$WindowsMountFolder" or "$WinREMountFolder" folder while running
-    the script, because this might cause errors while DISM tries to unmount images.
     .PARAMETER SKU
     Set the needed Windows SKU. If no parameter is given, Pro Education is used.
     Available SKUs can be checked with the following command:
@@ -34,10 +30,6 @@
     Path to WinPE drivers. Default path is C:\Temp\WinPE-Drivers.
     .PARAMETER ModelDriversFolder
     Path to device model drivers. Default path is C:\Temp\Model-Drivers.
-    .PARAMETER WindowsMountFolder
-    Define path where install.wim will be mounted. Default path is C:\Temp\Mount.
-    .PARAMETER WinREMountFolder
-    Define path where Winre.wim will be mounted. Default path is C:\Temp\WinRE.
     .EXAMPLE
     PS> Create-WindowsInstallMedia.ps1
     .EXAMPLE
@@ -54,13 +46,26 @@ Param (
     [string]$WindowsSourceFolder = "C:\Temp\WindowsSource",
     [string]$WinPEDriverFolder = "C:\Temp\WinPE-Drivers",
     [string]$ModelDriversFolder = "C:\Temp\Model-Drivers",
-    [string]$WindowsMountFolder = "C:\Temp\Mount",
-    [string]$WinREMountFolder = "C:\Temp\WinRE",
     [switch]$SplitImage = $false
 )
 
-#Variables
+#Set split size
 $SplitSize = "3800"
+
+### DO NOT MODIFY BELOW THIS LINE ###
+
+#Create mount folders if they do not exist
+If (!(Test-Path "$($env:ProgramData)\Create-WindowsInstallMedia\Mount")){
+    Mkdir "$($env:ProgramData)\Create-WindowsInstallMedia\Mount" > $null
+}
+
+If (!(Test-Path "$($env:ProgramData)\Create-WindowsInstallMedia\WinRE")){
+    Mkdir "$($env:ProgramData)\Create-WindowsInstallMedia\WinRE" > $null
+}
+
+#Folder variables
+$WindowsMountFolder = "$($env:ProgramData)\Create-WindowsInstallMedia\Mount"
+$WinREMountFolder = "$($env:ProgramData)\Create-WindowsInstallMedia\WinRE"
 
 #Begin if required folders are found
 If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Test-Path $WindowsMountFolder) -and (Test-Path $WinREMountFolder) -and (Test-Path $WindowsSourceFolder)){
@@ -247,6 +252,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Write-host "Error encountered while exporting Index:$Index, $SKU"$_.Exception.Message -ForegroundColor Red
                         }
                         
+                        #Remove install.wim and rename temp.wim to install.wim
                         Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
                         Rename-Item -Path "$WindowsSourceFolder\sources\temp.wim" -NewName "install.wim"
 
@@ -263,6 +269,10 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
                         }
 
+                        #Cleanup
+                        Remove-Item -Path "$($env:ProgramData)\Create-WindowsInstallMedia" -Recurse -Force
+
+                        #Success
                         Write-Host "Media created successfully" -ForegroundColor Green
                     }
                 }

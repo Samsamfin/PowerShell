@@ -4,9 +4,9 @@
     Create Windows installation media with manufacturer and model specific drivers. WinPE drivers are also added to WinRE.
 
     Sami Törönen
-    01.02.2024
+    04.02.2024
 
-    Version 1.5.2
+    Version 1.5.3
     .DESCRIPTION
     For this to work, create the following folder structure. The script will use this structure by default, but if you choose to use
     different folder names, make sure to use the additional parameters described below to set the desired paths.
@@ -109,7 +109,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
                         Write-Host "Mounting boot.wim, Index:1, $BootWimName" -ForegroundColor Green
                         try {
-                            Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder  > $null
+                            #Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder  > $null
+                            $StatusTitle = "Mounting boot.wim, Index:1, $BootWimName"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:1 /MountDir:$WindowsMountFolder" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
@@ -117,7 +132,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
                         Write-Host "Injecting $PEDriverFolderCheck WinPE driver(s) to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
                         try {
-                            Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned  #> $null
+                            #Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned  #> $null
+                            $StatusTitle = "Injecting $PEDriverFolderCheck WinPE driver(s) to boot.wim, Index:1, $BootWimName"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
@@ -125,7 +155,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
                         Write-Host "Committing changes to boot.wim, Index:1, $BootWimName" -ForegroundColor Green
                         try {
-                            Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit > $null
+                            #Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit > $null
+                            $StatusTitle = "Committing changes to boot.wim, Index:1, $BootWimName"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Unmount-Image /MountDir:$WindowsMountFolder /Commit" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red
@@ -137,7 +182,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         
                         Write-Host "Mounting boot.wim, Index:2, $BootWimName" -ForegroundColor Green
                         try {
-                            Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:2 /MountDir:$WindowsMountFolder > $null
+                            #Dism /Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:2 /MountDir:$WindowsMountFolder > $null
+                            $StatusTitle = "Mounting boot.wim, Index:2, $BootWimName"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Mount-image /imagefile:$WindowsSourceFolder\sources\boot.wim /Index:2 /MountDir:$WindowsMountFolder" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
@@ -145,7 +205,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
                         Write-Host "Injecting $PEDriverFolderCheck WinPE driver(s) to boot.wim, Index:2, $BootWimName" -ForegroundColor Green
                         try {
-                            Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned #> $null
+                            #Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned #> $null
+                            $StatusTitle = "Injecting $PEDriverFolderCheck WinPE driver(s) to boot.wim, Index:2, $BootWimName"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Image:$WindowsMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
@@ -153,7 +228,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         
                         Write-Host "Committing changes to boot.wim, Index:2, $BootWimName" -ForegroundColor Green
                         try {
-                            Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit > $null
+                            #Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit > $null
+                            $StatusTitle = "Committing changes to boot.wim, Index:2, $BootWimName"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Unmount-Image /MountDir:$WindowsMountFolder /Commit" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red
@@ -171,7 +261,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
                         Write-Host "Mounting install.wim, Index:$Index - $SKU" -ForegroundColor Green
                         try {
-                            Dism /Mount-Image /imagefile:$WindowsSourceFolder\sources\install.wim /Index:$Index /MountDir:$WindowsMountFolder #> $null
+                            #Dism /Mount-Image /imagefile:$WindowsSourceFolder\sources\install.wim /Index:$Index /MountDir:$WindowsMountFolder #> $null
+                            $StatusTitle = "Mounting install.wim, Index:$Index - $SKU"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Mount-Image /imagefile:$WindowsSourceFolder\sources\install.wim /Index:$Index /MountDir:$WindowsMountFolder" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
@@ -184,7 +289,23 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
                             Write-Host "Mounting Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
                             try {
-                                Dism /Mount-Wim /WimFile:$WindowsMountFolder\Windows\System32\Recovery\winre.wim /index:1 /MountDir:$WinREMountFolder > $null
+                                #Dism /Mount-Wim /WimFile:$WindowsMountFolder\Windows\System32\Recovery\winre.wim /index:1 /MountDir:$WinREMountFolder > $null
+                                $StatusTitle = "Mounting Winre.wim, Index:1, $WinREWimName"
+                                $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                                $DISM = Start-Process DISM.EXE -ArgumentList "/Mount-Wim /WimFile:$WindowsMountFolder\Windows\System32\Recovery\winre.wim /index:1 /MountDir:$WinREMountFolder" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                                do {
+                                    Start-Sleep -Milliseconds 300
+    
+                                    $Content = Get-Content -Path $Output -ReadCount 1
+                                    $LastLine = $Content | Select-Object -Last 1
+                                    if ($LastLine){
+                                        Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                    }
+                                }
+                                until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                                Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                                Remove-Item -Path "$Output" -Force
+                                
                             }
                             catch {
                                 Write-host "Error encountered while mounting"$_.Exception.Message -ForegroundColor Red
@@ -192,7 +313,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
 
                             Write-Host "Injecting $PEDriverFolderCheck WinPE driver(s) to Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
                             try {
-                                Dism /Image:$WinREMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned #> $null
+                                #Dism /Image:$WinREMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned #> $null
+                                $StatusTitle = "Injecting $PEDriverFolderCheck WinPE driver(s) to Winre.wim, Index:1, $WinREWimName"
+                                $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                                $DISM = Start-Process DISM.EXE -ArgumentList "/Image:$WinREMountFolder /Add-Driver /Driver:$WinPEDriverFolder /Recurse /ForceUnsigned" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                                do {
+                                    Start-Sleep -Milliseconds 300
+    
+                                    $Content = Get-Content -Path $Output -ReadCount 1
+                                    $LastLine = $Content | Select-Object -Last 1
+                                    if ($LastLine){
+                                        Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                    }
+                                }
+                                until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                                Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                                Remove-Item -Path "$Output" -Force
                             }
                             catch {
                                 Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
@@ -208,7 +344,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             
                             Write-Host "Committing changes to Winre.wim, Index:1, $WinREWimName" -ForegroundColor Green
                             try {
-                                Dism /Unmount-Image /MountDir:$WinREMountFolder /Commit > $null
+                                #Dism /Unmount-Image /MountDir:$WinREMountFolder /Commit > $null
+                                $StatusTitle = "Committing changes to Winre.wim, Index:1, $WinREWimName"
+                                $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                                $DISM = Start-Process DISM.EXE -ArgumentList "/Unmount-Image /MountDir:$WinREMountFolder /Commit" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                                do {
+                                    Start-Sleep -Milliseconds 300
+    
+                                    $Content = Get-Content -Path $Output -ReadCount 1
+                                    $LastLine = $Content | Select-Object -Last 1
+                                    if ($LastLine){
+                                        Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                    }
+                                }
+                                until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                                Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                                Remove-Item -Path "$Output" -Force
                             }
                             catch {
                                 Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red
@@ -223,7 +374,21 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         If($ModelDriversFolderCheck -ne 0){
                             Write-Host "Injecting $ModelDriversFolderCheck driver(s) to install.wim, Index:$Index, $SKU" -ForegroundColor Green
                             try {
-                                Dism /Image:$WindowsMountFolder /Add-Driver /Driver:$ModelDriversFolder /Recurse /ForceUnsigned #> $null
+                                $StatusTitle = "Injecting drivers"
+                                $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                                $DISM = Start-Process DISM.EXE -ArgumentList "/image:$WindowsMountFolder /Add-Driver /driver:$ModelDriversFolder /recurse" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                                do {
+                                    Start-Sleep -Milliseconds 300
+
+                                    $Content = Get-Content -Path $Output -ReadCount 1
+                                    $LastLine = $Content | Select-Object -Last 1
+                                    if ($LastLine){
+                                        Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                    }
+                                }
+                                until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                                Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                                Remove-Item -Path "$Output" -Force
                             }
                             catch {
                                 Write-host "Error encountered while injecting drivers"$_.Exception.Message -ForegroundColor Red
@@ -237,7 +402,22 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                         #Save changes to install.wim
                         Write-Host "Committing changes to install.wim, Index:$Index, $SKU - this step will take 5-30 minutes" -ForegroundColor Green
                         try {
-                            Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit #> $null
+                            #Dism /Unmount-Image /MountDir:$WindowsMountFolder /Commit #> $null
+                            $StatusTitle = "Committing changes to install.wim, Index:$Index, $SKU - this step will take 5-30 minutes"
+                            $Output = "$($env:ProgramData)\Create-WindowsInstallMedia\Output.txt"
+                            $DISM = Start-Process DISM.EXE -ArgumentList "/Unmount-Image /MountDir:$WindowsMountFolder /Commit" -PassThru -NoNewWindow -RedirectStandardOutput $Output
+                            do {
+                                Start-Sleep -Milliseconds 300
+
+                                $Content = Get-Content -Path $Output -ReadCount 1
+                                $LastLine = $Content | Select-Object -Last 1
+                                if ($LastLine){
+                                    Write-Progress -Status "$LastLine" -Activity "$StatusTitle"
+                                }
+                            }
+                            until (!(Get-Process -Name DISM -ErrorAction SilentlyContinue))
+                            Write-Progress -Completed -Activity "$StatusTitle" -Status "Finished"
+                            Remove-Item -Path "$Output" -Force
                         }
                         catch {
                             Write-host "Error encountered while committing changes"$_.Exception.Message -ForegroundColor Red

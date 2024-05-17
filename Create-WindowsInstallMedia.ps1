@@ -4,7 +4,7 @@
     Create Windows installation media with manufacturer and model specific drivers. WinPE drivers are also added to WinRE.
 
     Sami Törönen
-    04.02.2024
+    17.05.2024
 
     Version 1.5.3
     .DESCRIPTION
@@ -17,11 +17,7 @@
 
     -Copy model specific drivers into "Model-Drivers" folder. This folder will be read recursively.
     -Copy manufacturer specific Win PE drivers into "WinPE-Drivers" folder. This folder will be read recursively.
-    -Copy Windows installation files into "WindowsSource" folder.
-    .PARAMETER SKU
-    Set the needed Windows SKU. If no parameter is given, Pro Education is used.
-    Available SKUs can be checked with the following command:
-    Get-WindowsImage -ImagePath 'Path\To\install.wim'
+    -Extract Windows ISO into "WindowsSource" folder.
     .PARAMETER SplitImage
     Split the final install.wim to 3800 MB .SWM parts so that the installation media can be used with FAT32 formatted USB-media.
     .PARAMETER WindowsSourceFolder
@@ -33,16 +29,13 @@
     .EXAMPLE
     PS> Create-WindowsInstallMedia.ps1
     .EXAMPLE
-    PS> Create-WindowsInstallMedia.ps1 -SKU "Windows 10 Pro"
+    PS> Create-WindowsInstallMedia.ps1 -SplitImage
     .EXAMPLE
-    PS> Create-WindowsInstallMedia.ps1 -SKU "Windows 10 Pro" -SplitImage
-    .EXAMPLE
-    PS> Create-WindowsInstallMedia.ps1 -SKU "Windows 10 Pro" -WindowsSourceFolder "C:\Temp\Source"
+    PS> Create-WindowsInstallMedia.ps1 -WindowsSourceFolder "C:\Temp\Source"
 #>
 
 [CmdLetBinding()]
 Param (
-    [string]$SKU,
     [string]$WindowsSourceFolder = "C:\Temp\WindowsSource",
     [string]$WinPEDriverFolder = "C:\Temp\WinPE-Drivers",
     [string]$ModelDriversFolder = "C:\Temp\Model-Drivers",
@@ -85,11 +78,18 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
         If($WindowsSourceTest){
             Write-Host "Windows source files found in $WindowsSourceFolder" -ForegroundColor Green
 
-            #Set SKU to Pro Education if variable was not given
-            If(!($SKU)){
-                Write-Host "SKU was not defined, will try Pro Education" -ForegroundColor Yellow
-                $SKUDefault = Get-WindowsImage -ImagePath $WindowsSourceFolder\sources\install.wim | Where-Object {$_.ImageName -like "Windows * Pro Education"}
-                $SKU = $SKUDefault.ImageName
+            #Select SKU
+            $AvailableSKUs = Get-WindowsImage -ImagePath "$WindowsSourceFolder\sources\install.wim" | select ImageIndex,ImageName | Out-Host
+            $SKUIndex = Read-Host "Please enter ImageIndex number that you want to use"
+            $SelectedImage = Get-WindowsImage -ImagePath "$WindowsSourceFolder\sources\install.wim" | Where-Object {$_.ImageIndex -like "$SKUIndex"} | select ImageName
+            if ($SelectedImage){
+                Write-Host "Selected image:" -ForegroundColor Green
+                $SelectedImage.ImageName
+                $SKU = $SelectedImage.ImageName
+            }
+            else{
+                Write-Host "Invalid ImageIndex number"
+                exit
             }
 
             #Begin if SKU matches

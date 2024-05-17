@@ -79,16 +79,20 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
             Write-Host "Windows source files found in $WindowsSourceFolder" -ForegroundColor Green
 
             #Select SKU
-            $AvailableSKUs = Get-WindowsImage -ImagePath "$WindowsSourceFolder\sources\install.wim" | select ImageIndex,ImageName | Out-Host
-            $SKUIndex = Read-Host "Please enter ImageIndex number that you want to use"
+            Write-Host "Available Windows editions" -ForegroundColor DarkCyan            
+            $AvailableSKUs = Get-WindowsImage -ImagePath "$WindowsSourceFolder\sources\install.wim" | ForEach-Object {
+                    "{0}. {1}" -f $_.ImageIndex, $_.ImageName | Out-Host
+                }
+            Write-Host
+            $SKUIndex = Read-Host "Please enter edition number to proceed"
             $SelectedImage = Get-WindowsImage -ImagePath "$WindowsSourceFolder\sources\install.wim" | Where-Object {$_.ImageIndex -like "$SKUIndex"} | select ImageName
             if($SelectedImage){
-                Write-Host "Selected image:" -ForegroundColor Green
+                Write-Host "Selected edition: " -ForegroundColor Green -NoNewLine
                 $SelectedImage.ImageName
                 $SKU = $SelectedImage.ImageName
             }
             else{
-                Write-Host "Invalid ImageIndex number" -ForegroundColor Red
+                Write-Host "Invalid edition number" -ForegroundColor Red
                 exit
             }
 

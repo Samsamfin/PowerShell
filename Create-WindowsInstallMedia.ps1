@@ -461,7 +461,7 @@ If((Test-Path $WinPEDriverFolder) -and (Test-Path $ModelDriversFolder) -and (Tes
                             Dism /Split-Image /ImageFile:$WindowsSourceFolder\sources\install.wim /SWMFile:$WindowsSourceFolder\sources\install.swm /FileSize:$SplitSize > $null
                         }
                         catch {
-                            Write-host "Error encountered while splitting install.wim".Exception.Message -ForegroundColor Red
+                            Write-host "Error encountered while splitting install.wim"$_.Exception.Message -ForegroundColor Red
                         }
                         
                         Remove-Item -Path "$WindowsSourceFolder\sources\install.wim"
